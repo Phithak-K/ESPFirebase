@@ -107,7 +107,10 @@ function setHealth(key, value) {
 // ═══════════════════════════════════════════
 // 🚨 TOAST ALERT SYSTEM
 // ═══════════════════════════════════════════
-const toastContainer = document.getElementById('toastContainer');
+// Lazy getter so we don't fail if element isn't ready yet
+function getToastContainer() {
+    return document.getElementById('toastContainer');
+}
 
 function showToast(level, title, msg) {
     const toast = document.createElement('div');
@@ -121,7 +124,9 @@ function showToast(level, title, msg) {
             <div class="toast-title">${title}</div>
             <div class="toast-msg">${msg}</div>
         </div>`;
-    toastContainer.appendChild(toast);
+    const container = getToastContainer();
+    if (!container) { console.warn('Toast container not found'); return; }
+    container.appendChild(toast);
 
     // Click to dismiss
     toast.addEventListener('click', () => dismissToast(toast));
@@ -135,31 +140,191 @@ function dismissToast(toast) {
     setTimeout(() => toast.parentNode && toast.parentNode.removeChild(toast), 300);
 }
 
-// ═══════════════════════════════════════════
-// 📊 EXPORT CSV
-// ═══════════════════════════════════════════
-let lastHistoryData = null; // keep a reference for export
+// Keep reference for CSV export
+let lastHistoryData = null;
+let lastLatestData  = null;
 
-document.getElementById('exportCsvBtn')?.addEventListener('click', () => {
-    if (!lastHistoryData) {
-        showToast('warn', 'ไม่มีข้อมูล', 'ยังไม่มีข้อมูล History กรุณารอสักครู่');
+// ═══════════════════════════════════════════
+// 🔲 FULLSCREEN
+// ═══════════════════════════════════════════
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(e => showToast('warn', 'Fullscreen Error', e.message));
+    } else {
+        document.exitFullscreen();
+    }
+}
+document.addEventListener('fullscreenchange', () => {
+    const isFs = !!document.fullscreenElement;
+    const icon = document.getElementById('fullscreenIcon');
+    const btn  = document.getElementById('fullscreenBtn');
+    if (icon) icon.className = isFs ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+    if (btn)  btn.style.background = isFs ? 'rgba(124,58,237,0.2)' : '';
+});
+
+// ═══════════════════════════════════════════
+// ⏰ TIME RANGE SYSTEM
+// ═══════════════════════════════════════════
+let currentRangeType = 'live';
+
+function setRange(type) {
+    currentRangeType = type;
+    document.querySelectorAll('.range-btn').forEach(b => b.classList.toggle('active', b.dataset.range === type));
+    const picker = document.getElementById('customPicker');
+    if (picker) picker.classList.toggle('visible', type === 'custom');
+    const texts = { live:'Live · 30 รายการล่าสุด', '1H':'1 ชั่วโมงที่ผ่านมา', '6H':'6 ชั่วโมงที่ผ่านมา', '24H':'24 ชั่วโมงที่ผ่านมา', '7D':'7 วันที่ผ่านมา', custom:'ช่วงเวลาที่กำหนดเอง' };
+    const lbl = document.getElementById('rangeLabel');
+    if (lbl) lbl.textContent = texts[type] || '';
+    if (type !== 'custom') fetchHistoryWithRange();
+}
+
+async function fetchHistoryWithRange() {
+    if (!DB_URL) return;
+    try {
+        const limit = currentRangeType === '7D' ? 2000 : 1000;
+        const res = await fetch(`${DB_URL}${DEVICE_PATH}/history.json?orderBy="$key"&limitToLast=${limit}`);
+        if (!res.ok) throw new Error('Network error');
+        const raw = await res.json();
+        if (!raw) { updateMinMax([]); return; }
+
+        let records = Object.values(raw).filter(r => r && r.timestamp != null);
+        const now = Math.floor(Date.now() / 1000);
+
+        switch (currentRangeType) {
+            case '1H':  records = records.filter(r => r.timestamp >= now - 3600);   break;
+            case '6H':  records = records.filter(r => r.timestamp >= now - 21600);  break;
+            case '24H': records = records.filter(r => r.timestamp >= now - 86400);  break;
+            case '7D':  records = records.filter(r => r.timestamp >= now - 604800); break;
+            case 'custom': {
+                const fromEl = document.getElementById('rangeFrom');
+                const toEl   = document.getElementById('rangeTo');
+                if (fromEl?.value && toEl?.value) {
+                    const startTs = Math.floor(new Date(fromEl.value).getTime() / 1000);
+                    const endTs   = Math.floor(new Date(toEl.value).getTime()   / 1000);
+                    records = records.filter(r => r.timestamp >= startTs && r.timestamp <= endTs);
+                }
+                break;
+            }
+            default: records = records.sort((a,b) => a.timestamp - b.timestamp).slice(-30);
+        }
+        records.sort((a,b) => a.timestamp - b.timestamp);
+        lastHistoryData = records.length > 0 ? Object.fromEntries(records.map((r,i) => [i,r])) : null;
+        updateChartFromArray(records);
+        updateMinMax(records);
+    } catch (err) { console.error('History fetch error:', err); }
+}
+
+function updateChartFromArray(records) {
+    if (!historyChart) return;
+    const labels=[], tD=[], hD=[], lD=[], pD=[], sD=[], bD=[];
+    const pad = n => String(n).padStart(2,'0');
+    records.forEach(r => {
+        if (!r) return;
+        const d = r.timestamp ? new Date(r.timestamp * 1000) : new Date();
+        const label = currentRangeType === '7D'
+            ? `${d.getDate()}/${d.getMonth()+1} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+            : `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        labels.push(label);
+        tD.push(r.temp??null); hD.push(r.humi??null); lD.push(r.light??null);
+        pD.push(r.pressure??null); sD.push(r.soil??null); bD.push(r.battery??null);
+    });
+    historyChart.data.labels = labels;
+    [tD,hD,lD,pD,sD,bD].forEach((d,i) => historyChart.data.datasets[i].data = d);
+    historyChart.update('none');
+}
+
+function updateMinMax(records) {
+    const keys = [
+        { k:'temp',     f: v => v.toFixed(1) },
+        { k:'humi',     f: v => v.toFixed(1) },
+        { k:'light',    f: v => Math.round(v).toString() },
+        { k:'pressure', f: v => Math.round(v).toString() },
+        { k:'soil',     f: v => v.toFixed(1) },
+        { k:'battery',  f: v => Math.round(v).toString() },
+    ];
+    keys.forEach(({ k, f }) => {
+        const vals = records.map(r => r[k]).filter(v => v != null && !isNaN(v));
+        const minEl = document.getElementById(k+'Min'), maxEl = document.getElementById(k+'Max');
+        if (vals.length === 0) { if(minEl) minEl.textContent='--'; if(maxEl) maxEl.textContent='--'; return; }
+        if (minEl) minEl.textContent = f(Math.min(...vals));
+        if (maxEl) maxEl.textContent = f(Math.max(...vals));
+    });
+}
+
+// ═══════════════════════════════════════════
+// 📡 ESP32 OFFLINE / STALE DETECTION
+// ═══════════════════════════════════════════
+let isOffline = false;
+function checkStaleness(timestamp) {
+    const ageSecs = Math.floor(Date.now() / 1000) - timestamp;
+    if (ageSecs > 120) {
+        const mins = Math.floor(ageSecs/60), secs = ageSecs%60;
+        if (!isOffline) {
+            isOffline = true;
+            document.body.classList.add('esp32-offline');
+            showToast('danger', 'ESP32 Offline 🔴', `ไม่ได้รับข้อมูลมา ${mins} นาทีแล้ว — บอร์ดอาจดับหรือเน็ตหลุด`);
+        }
+        statusPulse.classList.remove('active');
+        statusText.innerText = `Offline · ${mins}m ${secs}s`;
+        if (statusPill) { statusPill.classList.remove('connected'); statusPill.classList.add('offline'); }
+    } else {
+        if (isOffline) {
+            isOffline = false;
+            document.body.classList.remove('esp32-offline');
+            showToast('warn', 'ESP32 กลับมาออนไลน์ ✅', 'ได้รับข้อมูลใหม่แล้ว');
+        }
+    }
+}
+
+// ═══════════════════════════════════════════
+// 📌 DOM READY — Wire all interactive elements
+// ═══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('fullscreenBtn')?.addEventListener('click', toggleFullscreen);
+    document.querySelectorAll('.range-btn').forEach(btn => btn.addEventListener('click', () => setRange(btn.dataset.range)));
+    document.getElementById('applyRangeBtn')?.addEventListener('click', () => {
+        if (!document.getElementById('rangeFrom')?.value || !document.getElementById('rangeTo')?.value) {
+            showToast('warn', 'เลือกวันที่ด้วย', 'กรุณากรอกวันเริ่มต้นและสิ้นสุด'); return;
+        }
+        fetchHistoryWithRange();
+    });
+    // Default datetime values for custom picker
+    const now = new Date(), from = new Date(now.getTime() - 6*3600*1000);
+    const fmt = d => d.toISOString().slice(0,16);
+    const fromEl = document.getElementById('rangeFrom'), toEl = document.getElementById('rangeTo');
+    if (fromEl) fromEl.value = fmt(from);
+    if (toEl)   toEl.value   = fmt(now);
+    // Export CSV
+    document.getElementById('exportCsvBtn')?.addEventListener('click', handleExportCsv);
+});
+
+
+function handleExportCsv() {
+    // Use history if available, otherwise use latest as single-row export
+    const source = lastHistoryData || (lastLatestData ? { single: lastLatestData } : null);
+    if (!source) {
+        showToast('warn', 'ไม่มีข้อมูล', 'กรุณารอให้ข้อมูลโหลดก่อนนะครับ');
         return;
     }
     const rows = [['Timestamp', 'Temperature(°C)', 'Humidity(%)', 'Light(lx)', 'Pressure(hPa)', 'SoilMoisture(%)', 'Battery(%)']];
-    const records = Object.values(lastHistoryData).sort((a,b) => (a.timestamp||0)-(b.timestamp||0));
+    const records = Object.values(source).sort((a,b) => (a.timestamp||0)-(b.timestamp||0));
     records.forEach(r => {
         if (!r) return;
-        const t = r.timestamp ? new Date(r.timestamp * 1000).toLocaleString('th-TH') : '';
-        rows.push([t, r.temp??'', r.humi??'', r.light??'', r.pressure??'', r.soil??'', r.battery??'']);
+        const t = r.timestamp ? new Date(r.timestamp * 1000).toLocaleString('th-TH') : new Date().toLocaleString('th-TH');
+        rows.push([`"${t}"`, r.temp??'', r.humi??'', r.light??'', r.pressure??'', r.soil??'', r.battery??'']);
     });
-    const csv = rows.map(r => r.join(',')).join('\n');
+    const csv  = rows.map(r => r.join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href = url; a.download = `iot-120_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click(); URL.revokeObjectURL(url);
+    a.href = url;
+    a.download = `iot-120_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
     showToast('warn', 'Export สำเร็จ ✅', `ดาวน์โหลด ${records.length} รายการแล้ว`);
-});
+}
 
 // Chart Instance
 let historyChart;
@@ -200,9 +365,9 @@ saveBtn.addEventListener('click', () => {
 function initDashboard() {
     if(!historyChart) initChart();
     fetchLatest();
-    fetchHistory();
+    fetchHistoryWithRange(); // uses range state (default: live)
     setInterval(fetchLatest, 5000);
-    setInterval(fetchHistory, 10000);
+    setInterval(() => { if (currentRangeType === 'live') fetchHistoryWithRange(); }, 10000);
 }
 
 function initChart() {
@@ -344,6 +509,7 @@ async function fetchLatest() {
         const data = await res.json();
         
         if (data) {
+            lastLatestData = data; // save for CSV fallback
             if(data.temp !== undefined)     { tempVal.innerText      = data.temp.toFixed(1);      setBar(tempBar,     data.temp,     -10, 60);   setGauge('tempArc',     data.temp,     -10, 60);   setHealth('temp',     data.temp); }
             if(data.humi !== undefined)     { humiVal.innerText      = data.humi.toFixed(1);      setBar(humiBar,     data.humi,     0, 100);     setGauge('humiArc',     data.humi,     0, 100);    setHealth('humi',     data.humi); }
             if(data.light !== undefined)    { lightVal.innerText     = Math.round(data.light);    setBar(lightBar,    data.light,    0, 1200);    setGauge('lightArc',    data.light,    0, 1200);   setHealth('light',    data.light); }
@@ -356,7 +522,8 @@ async function fetchLatest() {
                 const t = date.toLocaleTimeString('th-TH');
                 lastUpdated.innerText = t;
                 const lu2 = document.getElementById('lastUpdated2');
-                if (lu2) lu2.innerText = '🕐 ' + t;
+                if (lu2) lu2.textContent = '🕐 ' + t;
+                checkStaleness(data.timestamp); // 📡 Offline detection
             }
 
             setConnectionStatus(true);
@@ -370,19 +537,8 @@ async function fetchLatest() {
 }
 
 async function fetchHistory() {
-    try {
-        const res = await fetch(`${DB_URL}${DEVICE_PATH}/history.json?orderBy="$key"&limitToLast=30`);
-        if (!res.ok) throw new Error("Network response was not ok");
-        
-        const data = await res.json();
-        
-        if (data) {
-            lastHistoryData = data;
-            updateChart(data);
-        }
-    } catch (err) {
-        console.error("History Fetch Error:", err);
-    }
+    // Redirect to unified fetchHistoryWithRange
+    return fetchHistoryWithRange();
 }
 
 function updateChart(dataObj) {

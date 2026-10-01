@@ -41,6 +41,9 @@
             <button id="settingsBtn" title="ตั้งค่า Firebase URL">
                 <i class="fa-solid fa-gear"></i>
             </button>
+            <button id="fullscreenBtn" title="เต็มจอ">
+                <i class="fa-solid fa-expand" id="fullscreenIcon"></i>
+            </button>
         </div>
     </header>
 
@@ -226,19 +229,90 @@
 
     <!-- ══ CHART ══ -->
     <section class="chart-wrapper">
+        <!-- Chart Header -->
         <div class="chart-header">
             <div class="chart-title">
                 <div class="chart-title-icon"><i class="fa-solid fa-chart-line"></i></div>
                 <div>
                     <h2>Historical Data — All 6 Sensors</h2>
-                    <small>Last 30 entries · Auto-refresh every 10s</small>
+                    <small id="rangeLabel">Live · 30 รายการล่าสุด · อัปเดตทุก 10s</small>
                 </div>
             </div>
-            <span id="lastUpdated2"></span>
-            <button id="exportCsvBtn" title="Export ข้อมูลเป็น CSV">
-                <i class="fa-solid fa-file-arrow-down"></i> Export CSV
+            <div class="chart-actions">
+                <span id="lastUpdated2" class="chart-timestamp"></span>
+                <button id="exportCsvBtn" title="Export ข้อมูลเป็น CSV">
+                    <i class="fa-solid fa-file-arrow-down"></i> Export CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- ⏰ Time Range Filter -->
+        <div class="range-bar">
+            <span class="range-label">ช่วงเวลา:</span>
+            <button class="range-btn active" data-range="live" id="rangeBtn-live">
+                <span class="live-dot"></span>Live
+            </button>
+            <button class="range-btn" data-range="1H" id="rangeBtn-1H">1H</button>
+            <button class="range-btn" data-range="6H" id="rangeBtn-6H">6H</button>
+            <button class="range-btn" data-range="24H" id="rangeBtn-24H">24H</button>
+            <button class="range-btn" data-range="7D" id="rangeBtn-7D">7D</button>
+            <button class="range-btn" data-range="custom" id="rangeBtn-custom">
+                <i class="fa-solid fa-calendar-days"></i> กำหนดเอง
             </button>
         </div>
+
+        <!-- 📅 Custom Date/Time Picker (hidden by default) -->
+        <div id="customPicker" class="custom-picker">
+            <div class="picker-row">
+                <div class="picker-group">
+                    <label for="rangeFrom"><i class="fa-regular fa-clock"></i> เริ่มต้น</label>
+                    <input type="datetime-local" id="rangeFrom">
+                </div>
+                <div class="picker-arrow"><i class="fa-solid fa-arrow-right-long"></i></div>
+                <div class="picker-group">
+                    <label for="rangeTo"><i class="fa-regular fa-clock"></i> สิ้นสุด</label>
+                    <input type="datetime-local" id="rangeTo">
+                </div>
+                <button id="applyRangeBtn" class="apply-btn">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i> ดูกราฟ
+                </button>
+            </div>
+        </div>
+
+        <!-- 📊 Min/Max Analytics Bar -->
+        <div id="minmaxBar" class="minmax-bar">
+            <div class="minmax-item" style="--c:var(--temp)">
+                <span class="minmax-name"><i class="fa-solid fa-temperature-half"></i> Temp</span>
+                <span class="minmax-stat"><i class="fa-solid fa-arrow-trend-up"></i> <span id="tempMax">--</span>°C</span>
+                <span class="minmax-stat dim"><i class="fa-solid fa-arrow-trend-down"></i> <span id="tempMin">--</span>°C</span>
+            </div>
+            <div class="minmax-item" style="--c:var(--humi)">
+                <span class="minmax-name"><i class="fa-solid fa-droplet"></i> Humidity</span>
+                <span class="minmax-stat"><i class="fa-solid fa-arrow-trend-up"></i> <span id="humiMax">--</span>%</span>
+                <span class="minmax-stat dim"><i class="fa-solid fa-arrow-trend-down"></i> <span id="humiMin">--</span>%</span>
+            </div>
+            <div class="minmax-item" style="--c:var(--light)">
+                <span class="minmax-name"><i class="fa-solid fa-sun"></i> Light</span>
+                <span class="minmax-stat"><i class="fa-solid fa-arrow-trend-up"></i> <span id="lightMax">--</span>lx</span>
+                <span class="minmax-stat dim"><i class="fa-solid fa-arrow-trend-down"></i> <span id="lightMin">--</span>lx</span>
+            </div>
+            <div class="minmax-item" style="--c:var(--pressure)">
+                <span class="minmax-name"><i class="fa-solid fa-gauge-high"></i> Pressure</span>
+                <span class="minmax-stat"><i class="fa-solid fa-arrow-trend-up"></i> <span id="pressureMax">--</span>hPa</span>
+                <span class="minmax-stat dim"><i class="fa-solid fa-arrow-trend-down"></i> <span id="pressureMin">--</span>hPa</span>
+            </div>
+            <div class="minmax-item" style="--c:var(--soil)">
+                <span class="minmax-name"><i class="fa-solid fa-seedling"></i> Soil</span>
+                <span class="minmax-stat"><i class="fa-solid fa-arrow-trend-up"></i> <span id="soilMax">--</span>%</span>
+                <span class="minmax-stat dim"><i class="fa-solid fa-arrow-trend-down"></i> <span id="soilMin">--</span>%</span>
+            </div>
+            <div class="minmax-item" style="--c:var(--battery)">
+                <span class="minmax-name"><i class="fa-solid fa-battery-half"></i> Battery</span>
+                <span class="minmax-stat"><i class="fa-solid fa-arrow-trend-up"></i> <span id="batteryMax">--</span>%</span>
+                <span class="minmax-stat dim"><i class="fa-solid fa-arrow-trend-down"></i> <span id="batteryMin">--</span>%</span>
+            </div>
+        </div>
+
         <div class="canvas-container">
             <canvas id="historyChart"></canvas>
         </div>

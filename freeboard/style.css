@@ -845,6 +845,199 @@ header h1 {
 }
 
 /* ═══════════════════════════════════════════════
+   FULLSCREEN BUTTON
+═══════════════════════════════════════════════ */
+#fullscreenBtn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--border-2);
+    background: rgba(255,255,255,0.04);
+    color: var(--muted-2);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 0.9rem;
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+#fullscreenBtn:hover {
+    background: rgba(124,58,237,0.12);
+    border-color: rgba(196,119,255,0.4);
+    color: #c77dff;
+    box-shadow: 0 0 16px rgba(124,58,237,0.2);
+    transform: scale(1.1);
+}
+
+/* ═══════════════════════════════════════════════
+   CHART HEADER ACTIONS
+═══════════════════════════════════════════════ */
+.chart-actions {
+    display: flex; align-items: center; gap: 0.75rem;
+}
+.chart-timestamp {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; color: var(--muted-2);
+    background: rgba(0,0,0,0.3);
+    padding: 0.35rem 0.9rem;
+    border-radius: 99px; border: 1px solid var(--border);
+}
+
+/* ═══════════════════════════════════════════════
+   TIME RANGE BAR
+═══════════════════════════════════════════════ */
+.range-bar {
+    display: flex; align-items: center; gap: 0.5rem;
+    flex-wrap: wrap; margin-bottom: 0.9rem;
+}
+.range-label {
+    font-size: 0.72rem; font-weight: 600;
+    color: var(--muted); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-right: 0.25rem;
+}
+.range-btn {
+    padding: 0.38rem 0.85rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+    color: var(--muted-2);
+    font-size: 0.78rem; font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer; letter-spacing: 0.06em;
+    transition: all 0.25s;
+    display: flex; align-items: center; gap: 0.4rem;
+}
+.range-btn:hover {
+    background: rgba(0,212,255,0.07);
+    border-color: rgba(0,212,255,0.3);
+    color: var(--primary);
+}
+.range-btn.active {
+    background: rgba(0,212,255,0.12);
+    border-color: rgba(0,212,255,0.45);
+    color: var(--primary);
+    box-shadow: 0 0 14px rgba(0,212,255,0.12);
+}
+.live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 5px var(--success);
+    flex-shrink: 0;
+}
+.range-btn.active .live-dot { animation: livePulse 2s infinite; }
+
+/* ═══════════════════════════════════════════════
+   CUSTOM DATE/TIME PICKER
+═══════════════════════════════════════════════ */
+.custom-picker {
+    display: none;
+    margin-bottom: 1rem;
+}
+.custom-picker.visible { display: block; }
+.picker-row {
+    display: flex; align-items: flex-end; gap: 1rem;
+    flex-wrap: wrap; padding: 1rem 1.25rem;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+}
+.picker-group {
+    display: flex; flex-direction: column; gap: 0.4rem;
+    flex: 1; min-width: 180px;
+}
+.picker-group label {
+    font-size: 0.7rem; font-weight: 600;
+    color: var(--muted-2); text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: flex; align-items: center; gap: 0.3rem;
+}
+.picker-group input[type="datetime-local"] {
+    padding: 0.6rem 0.9rem;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-2);
+    border-radius: 0.6rem;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem; outline: none;
+    transition: all 0.3s; color-scheme: dark;
+}
+.picker-group input[type="datetime-local"]:focus {
+    border-color: rgba(0,212,255,0.5);
+    box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+}
+.picker-arrow {
+    color: var(--muted); padding-bottom: 0.65rem;
+    flex-shrink: 0;
+}
+.apply-btn {
+    padding: 0.6rem 1.2rem;
+    background: linear-gradient(135deg, rgba(0,212,255,0.12), rgba(124,58,237,0.12));
+    border: 1px solid rgba(0,212,255,0.35);
+    border-radius: 0.6rem; color: var(--primary);
+    font-weight: 700; font-size: 0.8rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer; white-space: nowrap;
+    display: flex; align-items: center; gap: 0.4rem;
+    align-self: flex-end; transition: all 0.3s;
+}
+.apply-btn:hover {
+    background: linear-gradient(135deg, rgba(0,212,255,0.22), rgba(124,58,237,0.22));
+    box-shadow: 0 0 20px rgba(0,212,255,0.2);
+    transform: translateY(-1px);
+}
+
+/* ═══════════════════════════════════════════════
+   MIN/MAX ANALYTICS BAR
+═══════════════════════════════════════════════ */
+.minmax-bar {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem; margin-bottom: 1.25rem;
+    padding: 0.85rem 1rem;
+    background: rgba(0,0,0,0.15);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+}
+.minmax-item {
+    display: flex; flex-direction: column; gap: 0.28rem;
+    padding: 0.45rem 0.7rem;
+    border-left: 2px solid var(--c, #fff);
+}
+.minmax-name {
+    font-size: 0.65rem; font-weight: 700;
+    color: var(--muted-2); text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: flex; align-items: center; gap: 0.25rem;
+}
+.minmax-stat {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.76rem; font-weight: 600;
+    color: var(--c, #fff);
+    display: flex; align-items: center; gap: 0.25rem;
+}
+.minmax-stat.dim {
+    color: color-mix(in srgb, var(--c, #fff) 55%, var(--muted));
+}
+
+/* ═══════════════════════════════════════════════
+   ESP32 OFFLINE / STALE STATE
+═══════════════════════════════════════════════ */
+.status-pill.offline {
+    border-color: rgba(255,68,68,0.35);
+    background: rgba(255,68,68,0.07);
+    color: var(--danger);
+    box-shadow: 0 0 16px rgba(255,68,68,0.1);
+}
+body.esp32-offline .card-number {
+    opacity: 0.3; filter: grayscale(0.9);
+    transition: opacity 0.8s, filter 0.8s;
+}
+body.esp32-offline .gauge-arc,
+body.esp32-offline .card-bar-fill {
+    opacity: 0.25;
+    transition: opacity 0.8s;
+}
+body.esp32-offline .card {
+    border-color: rgba(255,68,68,0.15) !important;
+}
+
+/* ═══════════════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════════════ */
 @media (max-width: 1100px) {
