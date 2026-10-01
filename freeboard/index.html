@@ -99,6 +99,7 @@
             </div>
             <div class="bar-label"><span>−10°</span><span>60°</span></div>
             <div class="card-bar-track"><div class="card-bar-fill" id="tempBar"></div></div>
+            <div class="health-badge" id="tempHealth"></div>
         </div>
 
         <!-- Humidity -->
@@ -122,6 +123,7 @@
             </div>
             <div class="bar-label"><span>0%</span><span>100%</span></div>
             <div class="card-bar-track"><div class="card-bar-fill" id="humiBar"></div></div>
+            <div class="health-badge" id="humiHealth"></div>
         </div>
 
         <!-- Light -->
@@ -145,6 +147,7 @@
             </div>
             <div class="bar-label"><span>0</span><span>1200</span></div>
             <div class="card-bar-track"><div class="card-bar-fill" id="lightBar"></div></div>
+            <div class="health-badge" id="lightHealth"></div>
         </div>
 
         <!-- Pressure -->
@@ -168,6 +171,7 @@
             </div>
             <div class="bar-label"><span>950</span><span>1050</span></div>
             <div class="card-bar-track"><div class="card-bar-fill" id="pressureBar"></div></div>
+            <div class="health-badge" id="pressureHealth"></div>
         </div>
 
         <!-- Soil Moisture -->
@@ -191,6 +195,7 @@
             </div>
             <div class="bar-label"><span>0%</span><span>100%</span></div>
             <div class="card-bar-track"><div class="card-bar-fill" id="soilBar"></div></div>
+            <div class="health-badge" id="soilHealth"></div>
         </div>
 
         <!-- Battery -->
@@ -214,6 +219,7 @@
             </div>
             <div class="bar-label"><span>0%</span><span>100%</span></div>
             <div class="card-bar-track"><div class="card-bar-fill" id="batteryBar"></div></div>
+            <div class="health-badge" id="batteryHealth"></div>
         </div>
 
     </section>
@@ -229,6 +235,9 @@
                 </div>
             </div>
             <span id="lastUpdated2"></span>
+            <button id="exportCsvBtn" title="Export ข้อมูลเป็น CSV">
+                <i class="fa-solid fa-file-arrow-down"></i> Export CSV
+            </button>
         </div>
         <div class="canvas-container">
             <canvas id="historyChart"></canvas>
@@ -236,6 +245,9 @@
     </section>
 
 </div>
+
+<!-- ══ TOAST ALERT CONTAINER ══ -->
+<div id="toastContainer"></div>
 
 <!-- ══ CONFIG MODAL ══ -->
 <div class="config-modal hidden" id="configModal">
