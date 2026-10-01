@@ -38,9 +38,7 @@
                 <span class="pulse-dot" id="statusPulse"></span>
                 <span id="statusText">Connecting…</span>
             </div>
-            <button id="settingsBtn" title="ตั้งค่า Firebase URL">
-                <i class="fa-solid fa-gear"></i>
-            </button>
+
             <button id="muteBtn" title="เปิด/ปิดเสียงเตือน" class="">
                 <i class="fa-solid fa-volume-high" id="muteIcon"></i>
             </button>
@@ -357,21 +355,6 @@
 
 <!-- ══ TOAST ALERT CONTAINER ══ -->
 <div id="toastContainer"></div>
-
-<!-- ══ CONFIG MODAL ══ -->
-<div class="config-modal hidden" id="configModal">
-    <div class="modal-content">
-        <div class="modal-icon"><i class="fa-solid fa-database"></i></div>
-        <h2>Firebase Setup</h2>
-        <p>กรอก URL ของ Firebase Realtime Database ของคุณ<br>
-           <small style="color:#4a5568; font-family:'JetBrains Mono',monospace; font-size:0.75rem;">
-               เช่น https://your-project.asia-southeast1.firebasedatabase.app
-           </small>
-        </p>
-        <input type="url" id="dbUrlInput" placeholder="https://YOUR-PROJECT-rtdb.firebasedatabase.app" />
-        <button id="saveBtn"><i class="fa-solid fa-plug-circle-bolt"></i> &nbsp;Save &amp; Connect</button>
-    </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="config.js"></script>

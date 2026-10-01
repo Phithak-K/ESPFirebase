@@ -10,10 +10,6 @@ let DB_URL = "https://iot-120-default-rtdb.asia-southeast1.firebasedatabase.app"
 const DEVICE_PATH = "/iot-120"; 
 
 // DOM Elements
-const modal = document.getElementById('configModal');
-const dbUrlInput = document.getElementById('dbUrlInput');
-const saveBtn = document.getElementById('saveBtn');
-
 const tempVal = document.getElementById('tempValue');
 const humiVal = document.getElementById('humiValue');
 const lightVal = document.getElementById('lightValue');
@@ -383,37 +379,7 @@ function handleExportCsv() {
 let historyChart;
 
 // Initialize
-if (!DB_URL) {
-    modal.classList.remove('hidden');
-} else {
-    modal.classList.add('hidden');
-    initDashboard();
-}
-
-const settingsBtn = document.getElementById('settingsBtn');
-if (settingsBtn) {
-    settingsBtn.addEventListener('click', () => {
-        dbUrlInput.value = DB_URL;
-        modal.classList.remove('hidden');
-    });
-}
-
-modal.addEventListener('click', (e) => {
-    if (e.target === modal && DB_URL) {
-        modal.classList.add('hidden');
-    }
-});
-
-saveBtn.addEventListener('click', () => {
-    let url = dbUrlInput.value.trim();
-    if(url) {
-        if(url.endsWith('/')) url = url.slice(0, -1);
-        localStorage.setItem('esp32_db_url', url);
-        DB_URL = url;
-        modal.classList.add('hidden');
-        initDashboard();
-    }
-});
+initDashboard();
 
 function initDashboard() {
     if(!historyChart) { initChart(); initChartToggles(); }
