@@ -296,8 +296,11 @@ function checkStaleness(timestamp) {
             document.body.classList.add('esp32-offline');
             showToast('danger', 'ESP32 Offline 🔴', `ไม่ได้รับข้อมูลมา ${mins} นาทีแล้ว — บอร์ดอาจดับหรือเน็ตหลุด`);
         }
-        statusPulse.classList.remove('active');
-        statusText.innerText = `Offline · ${mins}m ${secs}s`;
+        const statusPulse = document.getElementById('statusPulse');
+        const statusText = document.getElementById('statusText');
+        const statusPill = document.getElementById('statusPill');
+        if (statusPulse) statusPulse.classList.remove('active');
+        if (statusText) statusText.innerText = `Offline · ${mins}m ${secs}s`;
         if (statusPill) { statusPill.classList.remove('connected'); statusPill.classList.add('offline'); }
     } else {
         if (isOffline) {
@@ -559,7 +562,6 @@ async function fetchLatest() {
             if (data.timestamp) {
                 const date = new Date(data.timestamp * 1000);
                 const t = date.toLocaleTimeString('th-TH');
-                lastUpdated.innerText = t;
                 const lu2 = document.getElementById('lastUpdated2');
                 if (lu2) lu2.textContent = '🕐 ' + t;
                 checkStaleness(data.timestamp); // 📡 Offline detection
@@ -622,13 +624,17 @@ function updateChart(dataObj) {
 }
 
 function setConnectionStatus(connected) {
+    const statusPulse = document.getElementById('statusPulse');
+    const statusText = document.getElementById('statusText');
+    const statusPill = document.getElementById('statusPill');
+    
     if (connected) {
-        statusPulse.classList.add('active');
-        statusText.innerText = "Live";
+        if (statusPulse) statusPulse.classList.add('active');
+        if (statusText) statusText.innerText = "Live";
         if (statusPill) statusPill.classList.add('connected');
     } else {
-        statusPulse.classList.remove('active');
-        statusText.innerText = "Disconnected";
+        if (statusPulse) statusPulse.classList.remove('active');
+        if (statusText) statusText.innerText = "Disconnected";
         if (statusPill) statusPill.classList.remove('connected');
     }
 }
