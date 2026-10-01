@@ -41,6 +41,9 @@
             <button id="settingsBtn" title="ตั้งค่า Firebase URL">
                 <i class="fa-solid fa-gear"></i>
             </button>
+            <button id="muteBtn" title="เปิด/ปิดเสียงเตือน" class="">
+                <i class="fa-solid fa-volume-high" id="muteIcon"></i>
+            </button>
             <button id="fullscreenBtn" title="เต็มจอ">
                 <i class="fa-solid fa-expand" id="fullscreenIcon"></i>
             </button>
@@ -240,6 +243,9 @@
             </div>
             <div class="chart-actions">
                 <span id="lastUpdated2" class="chart-timestamp"></span>
+                <button id="exportPngBtn" title="บันทึกกราฟเป็นรูปภาพ PNG">
+                    <i class="fa-solid fa-image"></i> Save Graph
+                </button>
                 <button id="exportCsvBtn" title="Export ข้อมูลเป็น CSV">
                     <i class="fa-solid fa-file-arrow-down"></i> Export CSV
                 </button>
@@ -311,6 +317,35 @@
                 <span class="minmax-stat"><i class="fa-solid fa-arrow-trend-up"></i> <span id="batteryMax">--</span>%</span>
                 <span class="minmax-stat dim"><i class="fa-solid fa-arrow-trend-down"></i> <span id="batteryMin">--</span>%</span>
             </div>
+        </div>
+
+        <!-- 🎯 Smart Chart Toggles -->
+        <div class="chart-toggles" id="chartToggles">
+            <span class="toggles-label">แสดงเส้น:</span>
+            <button class="toggle-btn active" data-dataset="0" style="--tc:#f97316" title="Temperature">
+                <span class="toggle-led"></span>
+                <i class="fa-solid fa-temperature-half"></i> Temp
+            </button>
+            <button class="toggle-btn active" data-dataset="1" style="--tc:#0ea5e9" title="Humidity">
+                <span class="toggle-led"></span>
+                <i class="fa-solid fa-droplet"></i> Humidity
+            </button>
+            <button class="toggle-btn active" data-dataset="2" style="--tc:#eab308" title="Light">
+                <span class="toggle-led"></span>
+                <i class="fa-solid fa-sun"></i> Light
+            </button>
+            <button class="toggle-btn" data-dataset="3" style="--tc:#a855f7" title="Pressure">
+                <span class="toggle-led"></span>
+                <i class="fa-solid fa-gauge-high"></i> Pressure
+            </button>
+            <button class="toggle-btn" data-dataset="4" style="--tc:#22c55e" title="Soil">
+                <span class="toggle-led"></span>
+                <i class="fa-solid fa-seedling"></i> Soil
+            </button>
+            <button class="toggle-btn" data-dataset="5" style="--tc:#ec4899" title="Battery">
+                <span class="toggle-led"></span>
+                <i class="fa-solid fa-battery-half"></i> Battery
+            </button>
         </div>
 
         <div class="canvas-container">

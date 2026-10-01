@@ -64,7 +64,54 @@ function setGauge(id, value, min, max) {
 }
 
 // ═══════════════════════════════════════════
-// 🌡️ HEALTH STATUS — Thresholds per sensor
+// 🔊 AUDIO ALARM SYSTEM (Web Audio API)
+// ═══════════════════════════════════════════
+let _audioCtx  = null;
+let isMuted    = false;
+
+function getAudioCtx() {
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_audioCtx.state === 'suspended') _audioCtx.resume();
+    return _audioCtx;
+}
+
+function playTone(freq, duration, type = 'sine', vol = 0.25) {
+    if (isMuted) return;
+    try {
+        const ctx  = getAudioCtx();
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = type; osc.frequency.value = freq;
+        gain.gain.setValueAtTime(vol, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + duration);
+    } catch(e) {}
+}
+
+function playDangerSiren() {
+    // 3-tone descending siren
+    playTone(1050, 0.18, 'square', 0.22);
+    setTimeout(() => playTone(800,  0.18, 'square', 0.22), 220);
+    setTimeout(() => playTone(600,  0.22, 'square', 0.22), 440);
+}
+
+function playWarnBeep() {
+    // Double soft beep
+    playTone(700, 0.18, 'sine', 0.18);
+    setTimeout(() => playTone(700, 0.18, 'sine', 0.18), 280);
+}
+
+function toggleMute() {
+    isMuted = !isMuted;
+    const icon = document.getElementById('muteIcon');
+    const btn  = document.getElementById('muteBtn');
+    if (icon) icon.className = isMuted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+    if (btn)  btn.classList.toggle('muted', isMuted);
+    if (!isMuted) playTone(880, 0.12, 'sine', 0.15); // confirm-unmute sound
+}
+
 // ═══════════════════════════════════════════
 const THRESHOLDS = {
     temp:     { warn: 35,  danger: 40,  unit: '°C',  label: 'Temperature' },
@@ -94,12 +141,15 @@ function setHealth(key, value) {
     el.className = `health-badge visible ${level}`;
     el.innerHTML = `${icon} ${text}`;
 
-    // Trigger toast if warn/danger and not on cooldown
+    // Trigger toast + audio if warn/danger and not on cooldown
     if (level !== 'ok') {
         const now = Date.now();
         if (!toastCooldown[key] || now - toastCooldown[key] > 30000) {
             toastCooldown[key] = now;
             showToast(level, t.label, `ค่า ${t.label} = ${value} ${t.unit} (${text})`);
+            // 🔊 Play audio alarm
+            if (level === 'danger') playDangerSiren();
+            else                   playWarnBeep();
         }
     }
 }
@@ -280,15 +330,20 @@ function checkStaleness(timestamp) {
 // 📌 DOM READY — Wire all interactive elements
 // ═══════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', () => {
+    // Fullscreen
     document.getElementById('fullscreenBtn')?.addEventListener('click', toggleFullscreen);
+    // Mute button
+    document.getElementById('muteBtn')?.addEventListener('click', toggleMute);
+    // Time range buttons
     document.querySelectorAll('.range-btn').forEach(btn => btn.addEventListener('click', () => setRange(btn.dataset.range)));
+    // Apply custom range
     document.getElementById('applyRangeBtn')?.addEventListener('click', () => {
         if (!document.getElementById('rangeFrom')?.value || !document.getElementById('rangeTo')?.value) {
-            showToast('warn', 'เลือกวันที่ด้วย', 'กรุณากรอกวันเริ่มต้นและสิ้นสุด'); return;
+            showToast('warn', 'เลือกวันที่ด้วย', 'กรุณากรอกวันเริ่มต้นและวันสิ้นสุด'); return;
         }
         fetchHistoryWithRange();
     });
-    // Default datetime values for custom picker
+    // Default datetime-local values
     const now = new Date(), from = new Date(now.getTime() - 6*3600*1000);
     const fmt = d => d.toISOString().slice(0,16);
     const fromEl = document.getElementById('rangeFrom'), toEl = document.getElementById('rangeTo');
@@ -296,6 +351,18 @@ window.addEventListener('DOMContentLoaded', () => {
     if (toEl)   toEl.value   = fmt(now);
     // Export CSV
     document.getElementById('exportCsvBtn')?.addEventListener('click', handleExportCsv);
+    // Export PNG
+    document.getElementById('exportPngBtn')?.addEventListener('click', () => {
+        if (!historyChart) { showToast('warn', 'ไม่มีกราฟ', 'กรุณารอให้ข้อมูลโหลดก่อน'); return; }
+        const url = historyChart.toBase64Image('image/png', 1);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `iot-120_chart_${new Date().toISOString().slice(0,10)}.png`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        showToast('warn', 'บันทึกกราฟ ✅', 'ดาวน์โหลดรูป PNG แล้วครับ');
+    });
+    // 🎯 Smart Chart Toggles — wire after chart init (delayed)
+    // Toggles are wired by initChartToggles() called after initChart()
 });
 
 
@@ -363,11 +430,31 @@ saveBtn.addEventListener('click', () => {
 });
 
 function initDashboard() {
-    if(!historyChart) initChart();
+    if(!historyChart) { initChart(); initChartToggles(); }
     fetchLatest();
-    fetchHistoryWithRange(); // uses range state (default: live)
+    fetchHistoryWithRange();
     setInterval(fetchLatest, 5000);
     setInterval(() => { if (currentRangeType === 'live') fetchHistoryWithRange(); }, 10000);
+}
+
+// ═══════════════════════════════════════════
+// 🎯 SMART CHART TOGGLES
+// ═══════════════════════════════════════════
+function initChartToggles() {
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        const idx = parseInt(btn.dataset.dataset);
+        // Sync chart hidden state with initial button state
+        const meta = historyChart.getDatasetMeta(idx);
+        meta.hidden = !btn.classList.contains('active');
+        // Click handler
+        btn.addEventListener('click', () => {
+            const m = historyChart.getDatasetMeta(idx);
+            m.hidden = !m.hidden;
+            btn.classList.toggle('active', !m.hidden);
+            historyChart.update();
+        });
+    });
+    historyChart.update();
 }
 
 function initChart() {
