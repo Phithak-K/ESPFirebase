@@ -1,112 +1,184 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 IoT Dashboard - Freeboard</title>
+    <title>ESP32 IoT Dashboard — Student 120</title>
+    <meta name="description" content="Real-time IoT sensor dashboard powered by ESP32 and Firebase Realtime Database">
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="dashboard-container">
+
+        <!-- ── Header ── -->
         <header>
-            <h1><i class="fa-solid fa-microchip"></i> ESP32 IoT Dashboard</h1>
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <div class="status-indicator">
-                    <span class="pulse" id="statusPulse"></span>
-                    <span id="statusText">Disconnected</span>
+            <div class="header-left">
+                <span class="header-eyebrow"><i class="fa-solid fa-microchip"></i> &nbsp;ESP32 · Firebase RTDB · Student 120</span>
+                <h1>IoT Sensor Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="status-pill" id="statusPill">
+                    <span class="pulse-dot" id="statusPulse"></span>
+                    <span id="statusText">Connecting…</span>
                 </div>
-                <button id="settingsBtn" title="ตั้งค่า Firebase Database URL" style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                <button id="settingsBtn" title="ตั้งค่า Firebase URL">
                     <i class="fa-solid fa-gear"></i>
                 </button>
             </div>
         </header>
 
+        <!-- ── Quick Stats Bar ── -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-icon" style="background:rgba(56,189,248,0.12);color:#38bdf8;">
+                    <i class="fa-solid fa-wifi"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">Device</div>
+                    <div class="stat-value">ESP32 #120</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon" style="background:rgba(139,92,246,0.12);color:#8b5cf6;">
+                    <i class="fa-solid fa-database"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">Database</div>
+                    <div class="stat-value">iot-120 · RTDB</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon" style="background:rgba(16,185,129,0.12);color:#10b981;">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-label">Last Update</div>
+                    <div class="stat-value" id="lastUpdated">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Sensor Cards ── -->
         <section class="cards-wrapper">
-            <!-- Temperature Card -->
+
+            <!-- Temperature -->
             <div class="card temp-card">
-                <div class="card-icon"><i class="fa-solid fa-temperature-half"></i></div>
-                <div class="card-content">
-                    <h3>Temperature</h3>
-                    <div class="value"><span id="tempValue">--</span><span class="unit">°C</span></div>
+                <div class="card-top">
+                    <div class="card-icon"><i class="fa-solid fa-temperature-half"></i></div>
+                    <span class="card-label">Temperature</span>
                 </div>
+                <div class="card-value-row">
+                    <span class="card-number" id="tempValue">--</span>
+                    <span class="card-unit">°C</span>
+                </div>
+                <div class="card-bar-track"><div class="card-bar-fill" id="tempBar"></div></div>
             </div>
 
-            <!-- Humidity Card -->
+            <!-- Humidity -->
             <div class="card humi-card">
-                <div class="card-icon"><i class="fa-solid fa-droplet"></i></div>
-                <div class="card-content">
-                    <h3>Humidity</h3>
-                    <div class="value"><span id="humiValue">--</span><span class="unit">%</span></div>
+                <div class="card-top">
+                    <div class="card-icon"><i class="fa-solid fa-droplet"></i></div>
+                    <span class="card-label">Humidity</span>
                 </div>
+                <div class="card-value-row">
+                    <span class="card-number" id="humiValue">--</span>
+                    <span class="card-unit">%</span>
+                </div>
+                <div class="card-bar-track"><div class="card-bar-fill" id="humiBar"></div></div>
             </div>
 
-            <!-- Light Card -->
+            <!-- Light -->
             <div class="card light-card">
-                <div class="card-icon"><i class="fa-solid fa-sun"></i></div>
-                <div class="card-content">
-                    <h3>Light Level</h3>
-                    <div class="value"><span id="lightValue">--</span><span class="unit">lx</span></div>
+                <div class="card-top">
+                    <div class="card-icon"><i class="fa-solid fa-sun"></i></div>
+                    <span class="card-label">Light Level</span>
                 </div>
+                <div class="card-value-row">
+                    <span class="card-number" id="lightValue">--</span>
+                    <span class="card-unit">lx</span>
+                </div>
+                <div class="card-bar-track"><div class="card-bar-fill" id="lightBar"></div></div>
             </div>
-            
-            <!-- Pressure Card -->
+
+            <!-- Pressure -->
             <div class="card pressure-card">
-                <div class="card-icon"><i class="fa-solid fa-gauge-high"></i></div>
-                <div class="card-content">
-                    <h3>Pressure</h3>
-                    <div class="value"><span id="pressureValue">--</span><span class="unit">hPa</span></div>
+                <div class="card-top">
+                    <div class="card-icon"><i class="fa-solid fa-gauge-high"></i></div>
+                    <span class="card-label">Pressure</span>
                 </div>
+                <div class="card-value-row">
+                    <span class="card-number" id="pressureValue">--</span>
+                    <span class="card-unit">hPa</span>
+                </div>
+                <div class="card-bar-track"><div class="card-bar-fill" id="pressureBar"></div></div>
             </div>
 
-            <!-- Soil Moisture Card -->
+            <!-- Soil Moisture -->
             <div class="card soil-card">
-                <div class="card-icon"><i class="fa-solid fa-seedling"></i></div>
-                <div class="card-content">
-                    <h3>Soil Moisture</h3>
-                    <div class="value"><span id="soilValue">--</span><span class="unit">%</span></div>
+                <div class="card-top">
+                    <div class="card-icon"><i class="fa-solid fa-seedling"></i></div>
+                    <span class="card-label">Soil Moisture</span>
                 </div>
+                <div class="card-value-row">
+                    <span class="card-number" id="soilValue">--</span>
+                    <span class="card-unit">%</span>
+                </div>
+                <div class="card-bar-track"><div class="card-bar-fill" id="soilBar"></div></div>
             </div>
 
-            <!-- Battery Card -->
+            <!-- Battery -->
             <div class="card battery-card">
-                <div class="card-icon"><i class="fa-solid fa-battery-three-quarters"></i></div>
-                <div class="card-content">
-                    <h3>Battery Level</h3>
-                    <div class="value"><span id="batteryValue">--</span><span class="unit">%</span></div>
+                <div class="card-top">
+                    <div class="card-icon"><i class="fa-solid fa-battery-three-quarters"></i></div>
+                    <span class="card-label">Battery Level</span>
                 </div>
+                <div class="card-value-row">
+                    <span class="card-number" id="batteryValue">--</span>
+                    <span class="card-unit">%</span>
+                </div>
+                <div class="card-bar-track"><div class="card-bar-fill" id="batteryBar"></div></div>
             </div>
+
         </section>
 
+        <!-- ── Historical Chart ── -->
         <section class="chart-wrapper">
             <div class="chart-header">
-                <h2><i class="fa-solid fa-chart-line"></i> Historical Data (6 Sensors)</h2>
-                <small id="lastUpdated">Last updated: --</small>
+                <div class="chart-title">
+                    <div class="chart-title-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <h2>Historical Data — All 6 Sensors</h2>
+                </div>
             </div>
             <div class="canvas-container">
                 <canvas id="historyChart"></canvas>
             </div>
         </section>
-        
-        <div class="config-modal" id="configModal">
-            <div class="modal-content">
-                <h2>Firebase Setup</h2>
-                <p>Please enter your Firebase Database URL to begin.<br><small>เช่น https://your-project.firebaseio.com</small></p>
-                <input type="text" id="dbUrlInput" placeholder="https://YOUR-DATABASE.firebasedatabase.app" />
-                <button id="saveBtn">Save & Connect</button>
-            </div>
+
+    </div>
+
+    <!-- ── Config Modal ── -->
+    <div class="config-modal hidden" id="configModal">
+        <div class="modal-content">
+            <div class="modal-icon"><i class="fa-solid fa-database"></i></div>
+            <h2>Firebase Setup</h2>
+            <p>กรอก URL ของ Firebase Realtime Database<br><small style="color:#475569;">เช่น https://your-project.asia-southeast1.firebasedatabase.app</small></p>
+            <input type="url" id="dbUrlInput" placeholder="https://YOUR-PROJECT-rtdb.firebasedatabase.app" />
+            <button id="saveBtn"><i class="fa-solid fa-plug-circle-bolt"></i> &nbsp;Save &amp; Connect</button>
         </div>
     </div>
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Config (ซ่อนจาก git) -->
+    <!-- Config (hidden from git) -->
     <script src="config.js"></script>
-    <!-- Custom JS -->
+    <!-- App Logic -->
     <script src="script.js"></script>
 </body>
 </html>

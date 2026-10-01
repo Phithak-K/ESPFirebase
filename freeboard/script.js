@@ -35,9 +35,24 @@ const pressureVal = document.getElementById('pressureValue');
 const soilVal = document.getElementById('soilValue');
 const batteryVal = document.getElementById('batteryValue');
 
+// Progress bars
+const tempBar     = document.getElementById('tempBar');
+const humiBar     = document.getElementById('humiBar');
+const lightBar    = document.getElementById('lightBar');
+const pressureBar = document.getElementById('pressureBar');
+const soilBar     = document.getElementById('soilBar');
+const batteryBar  = document.getElementById('batteryBar');
+
 const statusPulse = document.getElementById('statusPulse');
-const statusText = document.getElementById('statusText');
+const statusText  = document.getElementById('statusText');
+const statusPill  = document.getElementById('statusPill');
 const lastUpdated = document.getElementById('lastUpdated');
+
+function setBar(el, value, min, max) {
+    if (!el || value === undefined || value === null) return;
+    const pct = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
+    el.style.width = pct + '%';
+}
 
 // Chart Instance
 let historyChart;
@@ -87,7 +102,7 @@ function initChart() {
     const ctx = document.getElementById('historyChart').getContext('2d');
     
     Chart.defaults.color = '#94a3b8';
-    Chart.defaults.font.family = "'Outfit', sans-serif";
+    Chart.defaults.font.family = "'Inter', sans-serif";
 
     historyChart = new Chart(ctx, {
         type: 'line',
@@ -222,16 +237,16 @@ async function fetchLatest() {
         const data = await res.json();
         
         if (data) {
-            if(data.temp !== undefined) tempVal.innerText = data.temp.toFixed(1);
-            if(data.humi !== undefined) humiVal.innerText = data.humi.toFixed(1);
-            if(data.light !== undefined) lightVal.innerText = Math.round(data.light);
-            if(data.pressure !== undefined) pressureVal.innerText = Math.round(data.pressure);
-            if(data.soil !== undefined) soilVal.innerText = data.soil.toFixed(1);
-            if(data.battery !== undefined) batteryVal.innerText = Math.round(data.battery);
+            if(data.temp !== undefined)     { tempVal.innerText      = data.temp.toFixed(1);      setBar(tempBar,     data.temp,     -10, 60); }
+            if(data.humi !== undefined)     { humiVal.innerText      = data.humi.toFixed(1);      setBar(humiBar,     data.humi,     0, 100); }
+            if(data.light !== undefined)    { lightVal.innerText     = Math.round(data.light);    setBar(lightBar,    data.light,    0, 1200); }
+            if(data.pressure !== undefined) { pressureVal.innerText  = Math.round(data.pressure); setBar(pressureBar, data.pressure, 950, 1050); }
+            if(data.soil !== undefined)     { soilVal.innerText      = data.soil.toFixed(1);      setBar(soilBar,     data.soil,     0, 100); }
+            if(data.battery !== undefined)  { batteryVal.innerText   = Math.round(data.battery);  setBar(batteryBar,  data.battery,  0, 100); }
             
             if (data.timestamp) {
                 const date = new Date(data.timestamp * 1000);
-                lastUpdated.innerText = `Last updated: ${date.toLocaleTimeString()}`;
+                lastUpdated.innerText = date.toLocaleTimeString('th-TH');
             }
 
             setConnectionStatus(true);
@@ -304,10 +319,10 @@ function setConnectionStatus(connected) {
     if (connected) {
         statusPulse.classList.add('active');
         statusText.innerText = "Live";
-        statusText.style.color = "var(--success)";
+        if (statusPill) statusPill.classList.add('connected');
     } else {
         statusPulse.classList.remove('active');
         statusText.innerText = "Disconnected";
-        statusText.style.color = "var(--danger)";
+        if (statusPill) statusPill.classList.remove('connected');
     }
 }
