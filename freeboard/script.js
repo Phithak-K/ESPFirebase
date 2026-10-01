@@ -54,6 +54,15 @@ function setBar(el, value, min, max) {
     el.style.width = pct + '%';
 }
 
+// Circumference for r=20 SVG circle = 2π×20 ≈ 125.66
+const CIRC = 2 * Math.PI * 20;
+function setGauge(id, value, min, max) {
+    const arc = document.getElementById(id);
+    if (!arc || value === undefined || value === null) return;
+    const pct = Math.min(1, Math.max(0, (value - min) / (max - min)));
+    arc.style.strokeDashoffset = CIRC * (1 - pct);
+}
+
 // Chart Instance
 let historyChart;
 
@@ -237,16 +246,19 @@ async function fetchLatest() {
         const data = await res.json();
         
         if (data) {
-            if(data.temp !== undefined)     { tempVal.innerText      = data.temp.toFixed(1);      setBar(tempBar,     data.temp,     -10, 60); }
-            if(data.humi !== undefined)     { humiVal.innerText      = data.humi.toFixed(1);      setBar(humiBar,     data.humi,     0, 100); }
-            if(data.light !== undefined)    { lightVal.innerText     = Math.round(data.light);    setBar(lightBar,    data.light,    0, 1200); }
-            if(data.pressure !== undefined) { pressureVal.innerText  = Math.round(data.pressure); setBar(pressureBar, data.pressure, 950, 1050); }
-            if(data.soil !== undefined)     { soilVal.innerText      = data.soil.toFixed(1);      setBar(soilBar,     data.soil,     0, 100); }
-            if(data.battery !== undefined)  { batteryVal.innerText   = Math.round(data.battery);  setBar(batteryBar,  data.battery,  0, 100); }
+            if(data.temp !== undefined)     { tempVal.innerText      = data.temp.toFixed(1);      setBar(tempBar,     data.temp,     -10, 60);   setGauge('tempArc',     data.temp,     -10, 60); }
+            if(data.humi !== undefined)     { humiVal.innerText      = data.humi.toFixed(1);      setBar(humiBar,     data.humi,     0, 100);     setGauge('humiArc',     data.humi,     0, 100); }
+            if(data.light !== undefined)    { lightVal.innerText     = Math.round(data.light);    setBar(lightBar,    data.light,    0, 1200);    setGauge('lightArc',    data.light,    0, 1200); }
+            if(data.pressure !== undefined) { pressureVal.innerText  = Math.round(data.pressure); setBar(pressureBar, data.pressure, 950, 1050); setGauge('pressureArc', data.pressure, 950, 1050); }
+            if(data.soil !== undefined)     { soilVal.innerText      = data.soil.toFixed(1);      setBar(soilBar,     data.soil,     0, 100);     setGauge('soilArc',     data.soil,     0, 100); }
+            if(data.battery !== undefined)  { batteryVal.innerText   = Math.round(data.battery);  setBar(batteryBar,  data.battery,  0, 100);     setGauge('batteryArc',  data.battery,  0, 100); }
             
             if (data.timestamp) {
                 const date = new Date(data.timestamp * 1000);
-                lastUpdated.innerText = date.toLocaleTimeString('th-TH');
+                const t = date.toLocaleTimeString('th-TH');
+                lastUpdated.innerText = t;
+                const lu2 = document.getElementById('lastUpdated2');
+                if (lu2) lu2.innerText = '🕐 ' + t;
             }
 
             setConnectionStatus(true);
