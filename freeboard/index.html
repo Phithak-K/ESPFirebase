@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 IoT Dashboard - Freeboard</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header>
+            <h1><i class="fa-solid fa-microchip"></i> ESP32 IoT Dashboard</h1>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="status-indicator">
+                    <span class="pulse" id="statusPulse"></span>
+                    <span id="statusText">Disconnected</span>
+                </div>
+                <button id="settingsBtn" title="ตั้งค่า Firebase Database URL" style="background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+        </header>
+
+        <section class="cards-wrapper">
+            <!-- Temperature Card -->
+            <div class="card temp-card">
+                <div class="card-icon"><i class="fa-solid fa-temperature-half"></i></div>
+                <div class="card-content">
+                    <h3>Temperature</h3>
+                    <div class="value"><span id="tempValue">--</span><span class="unit">°C</span></div>
+                </div>
+            </div>
+
+            <!-- Humidity Card -->
+            <div class="card humi-card">
+                <div class="card-icon"><i class="fa-solid fa-droplet"></i></div>
+                <div class="card-content">
+                    <h3>Humidity</h3>
+                    <div class="value"><span id="humiValue">--</span><span class="unit">%</span></div>
+                </div>
+            </div>
+
+            <!-- Light Card -->
+            <div class="card light-card">
+                <div class="card-icon"><i class="fa-solid fa-sun"></i></div>
+                <div class="card-content">
+                    <h3>Light Level</h3>
+                    <div class="value"><span id="lightValue">--</span><span class="unit">lx</span></div>
+                </div>
+            </div>
+            
+            <!-- Pressure Card -->
+            <div class="card pressure-card">
+                <div class="card-icon"><i class="fa-solid fa-gauge-high"></i></div>
+                <div class="card-content">
+                    <h3>Pressure</h3>
+                    <div class="value"><span id="pressureValue">--</span><span class="unit">hPa</span></div>
+                </div>
+            </div>
+
+            <!-- Soil Moisture Card -->
+            <div class="card soil-card">
+                <div class="card-icon"><i class="fa-solid fa-seedling"></i></div>
+                <div class="card-content">
+                    <h3>Soil Moisture</h3>
+                    <div class="value"><span id="soilValue">--</span><span class="unit">%</span></div>
+                </div>
+            </div>
+
+            <!-- Battery Card -->
+            <div class="card battery-card">
+                <div class="card-icon"><i class="fa-solid fa-battery-three-quarters"></i></div>
+                <div class="card-content">
+                    <h3>Battery Level</h3>
+                    <div class="value"><span id="batteryValue">--</span><span class="unit">%</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="chart-wrapper">
+            <div class="chart-header">
+                <h2><i class="fa-solid fa-chart-line"></i> Historical Data (6 Sensors)</h2>
+                <small id="lastUpdated">Last updated: --</small>
+            </div>
+            <div class="canvas-container">
+                <canvas id="historyChart"></canvas>
+            </div>
+        </section>
+        
+        <div class="config-modal" id="configModal">
+            <div class="modal-content">
+                <h2>Firebase Setup</h2>
+                <p>Please enter your Firebase Database URL to begin.<br><small>เช่น https://your-project.firebaseio.com</small></p>
+                <input type="text" id="dbUrlInput" placeholder="https://YOUR-DATABASE.firebasedatabase.app" />
+                <button id="saveBtn">Save & Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Config (ซ่อนจาก git) -->
+    <script src="config.js"></script>
+    <!-- Custom JS -->
+    <script src="script.js"></script>
+</body>
+</html>

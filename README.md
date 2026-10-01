@@ -1,0 +1,54 @@
+# ระบบส่งข้อมูล IoT ด้วย ESP32 และ Firebase Realtime Database พร้อม Web Dashboard (ESPFirebase)
+
+[![CI — Build, Lint & Test](https://github.com/Phithak-K/ESPFirebase/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Phithak-K/ESPFirebase/actions/workflows/ci.yml)
+
+### Real-time ESP32 Sensor Telemetry & Historical Data Visualization with ESPHome and Firebase RTDB
+
+> **ปฏิบัติการระบบ Internet of Things (IoT)** — การสร้างสถาปัตยกรรมการส่งข้อมูลเซ็นเซอร์จากบอร์ดไมโครคอนโทรลเลอร์ ESP32 ผ่านโปรโตคอล HTTPS REST API ไปยัง Firebase Realtime Database แบบ 2 เลเยอร์ (Current Latest State และ Historical Time-Series) พร้อมหน้าเว็บมอนิเตอร์ริ่งแบบเรียลไทม์ (Web Dashboard)
+
+---
+
+## 1. โครงสร้างโปรเจกต์ (Repository Structure)
+
+```text
+├── .github/workflows/
+│   └── ci.yml                     # ระบบอัตโนมัติ GitHub Actions ตรวจสอบไวยากรณ์และความปลอดภัย (CI)
+├── config/
+│   ├── firebase-l1.yaml           # L1: ส่งค่าคงที่ไปยัง /latest
+│   ├── firebase-l2.yaml           # L2: ส่งค่าเซ็นเซอร์จำลอง (Random) ไปยัง /latest
+│   ├── firebase-l3.yaml           # L3: ส่งข้อมูลแบบบันทึกประวัติ (POST) ไปยัง /history
+│   ├── firebase-l4.yaml           # L4: ซิงค์เวลาโลก (SNTP) และส่ง Timestamp ไปยัง /history
+│   ├── firebase-l5.yaml           # L5: สถาปัตยกรรมสมบูรณ์ (PUT -> latest และ POST -> history)
+│   ├── secrets.yaml.example       # ไฟล์แม่แบบตัวอย่างสำหรับตั้งค่า Wi-Fi และ Database URL
+│   └── .gitignore                 # ป้องกัน secrets.yaml ไม่ให้หลุดขึ้น Git
+├── dashboard/
+│   ├── index.html                 # หน้าจอ Dashboard แสดงผลข้อมูล IoT
+│   ├── style.css                  # ตกแต่ง UI ในธีม Glassmorphism Dark Mode
+│   ├── script.js                  # เชื่อมต่อดึงข้อมูลจาก Firebase REST API และวาดกราฟ Chart.js
+│   ├── config.example.js          # ตัวอย่างไฟล์ตั้งค่า Database URL ของหน้าเว็บ
+│   └── config.js                  # (Local Only) เก็บ Database URL จริงสำหรับเปิดในเครื่อง
+└── .gitignore                     # กฎการป้องกันไฟล์ความลับทั้งหมดของโปรเจกต์
+```
+
+---
+
+## 2. ลำดับการทดลอง (Laboratory Levels: L1 - L5)
+
+| Level | ความสามารถที่เพิ่มขึ้น | เมธอด HTTP | ปลายทาง (Path) | แนวคิดสำคัญ |
+| :--- | :--- | :---: | :--- | :--- |
+| **L1** | ส่งค่าคงที่ทดสอบ | `PUT` | `/lab/esp32-01/latest` | ทดสอบการเชื่อมต่อ ESP32 -> Wi-Fi -> Firebase |
+| **L2** | เซ็นเซอร์จำลอง (Random) | `PUT` | `/lab/esp32-01/latest` | ส่งค่า Sensor State แปลงเป็น JSON |
+| **L3** | บันทึกประวัติย้อนหลัง | `POST` | `/lab/esp32-01/history` | Firebase สร้าง Push ID (Unique Key) อัตโนมัติ |
+| **L4** | บันทึกเวลามาตรฐาน (SNTP) | `POST` | `/lab/esp32-01/history` | แนบ Epoch Timestamp สำหรับ Time-Series Data |
+| **L5** | สถาปัตยกรรมแบบคู่ (Full System) | `PUT` + `POST` | `/latest` และ `/history` | รองรับทั้ง Current Telemetry และ Historical Analytics |
+
+---
+
+## 3. การรักษาความปลอดภัย (Security & Secret Management)
+
+* **ไม่จัดเก็บคีย์ลับบน Repository:** ไฟล์ `secrets.yaml` และ `dashboard/config.js` ถูกกำหนดไว้ใน `.gitignore` จะไม่มีการเก็บรหัสผ่าน Wi-Fi หรือ URL จริงขึ้นระบบ Git
+* **การใช้งานในเครื่อง (Local Setup):**
+  1. คัดลอก `config/secrets.yaml.example` เป็น `config/secrets.yaml` แล้วใส่ชื่อ Wi-Fi, รหัสผ่าน และ Firebase Database URL
+  2. คัดลอก `dashboard/config.example.js` เป็น `dashboard/config.js` แล้วใส่ Firebase Database URL
+* **การทดสอบอัตโนมัติ (Automated Testing with GitHub Actions):**
+  ระบบ GitHub Actions ทำหน้าที่ตรวจเช็คความถูกต้องของไวยากรณ์ไฟล์ ESPHome YAML ทุกไฟล์, ตรวจสอบไวยากรณ์ไฟล์ JavaScript ของหน้าเว็บ Dashboard และตรวจทานความปลอดภัยว่าไม่มีคีย์ลับรั่วไหลโดยอัตโนมัติทุกครั้งที่มีการ `git push`

@@ -1,0 +1,154 @@
+esphome:
+  name: firebase-hw
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+
+logger:
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  power_save_mode: none
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Asia/Bangkok
+    on_time_sync:
+      then:
+        - logger.log: "Time synchronized"
+
+http_request:
+  timeout: 10s
+
+sensor:
+  - platform: template
+    id: temp
+    name: "Temperature"
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    update_interval: 5s
+    lambda: |-
+      return 25.0 + random_float() * 10.0;
+
+  - platform: template
+    id: humi
+    name: "Humidity"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    update_interval: 5s
+    lambda: |-
+      return 50.0 + random_float() * 30.0;
+
+  - platform: template
+    id: light
+    name: "Light"
+    unit_of_measurement: "lx"
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return 100.0 + random_float() * 900.0;
+
+  - platform: template
+    id: pressure
+    name: "Pressure"
+    unit_of_measurement: "hPa"
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return 1000.0 + random_float() * 20.0;
+
+  - platform: template
+    id: soil
+    name: "Soil Moisture"
+    unit_of_measurement: "%"
+    accuracy_decimals: 1
+    update_interval: 5s
+    lambda: |-
+      return 30.0 + random_float() * 60.0;
+
+  - platform: template
+    id: battery
+    name: "Battery"
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    update_interval: 5s
+    lambda: |-
+      return 70.0 + random_float() * 30.0;
+
+interval:
+  - interval: 10s
+    then:
+      - if:
+          condition:
+            and:
+              - wifi.connected
+              - lambda: |-
+                  return id(sntp_time).now().is_valid();
+          then:
+            - logger.log:
+                format: "Send temp=%.1f humi=%.1f light=%.0f pressure=%.0f soil=%.1f bat=%.0f"
+                args:
+                  - id(temp).state
+                  - id(humi).state
+                  - id(light).state
+                  - id(pressure).state
+                  - id(soil).state
+                  - id(battery).state
+
+            # =========================
+            # 1. PUT -> latest
+            # =========================
+            - http_request.send:
+                method: PUT
+                url: !secret firebase_latest_url_hw
+                request_headers:
+                  Content-Type: application/json
+                json: |-
+                  root["temp"] = id(temp).state;
+                  root["humi"] = id(humi).state;
+                  root["light"] = id(light).state;
+                  root["pressure"] = id(pressure).state;
+                  root["soil"] = id(soil).state;
+                  root["battery"] = id(battery).state;
+                  root["timestamp"] = id(sntp_time).now().timestamp;
+                on_response:
+                  then:
+                    - logger.log:
+                        format: "Latest HTTP status = %d"
+                        args:
+                          - response->status_code
+                on_error:
+                  then:
+                    - logger.log: "Latest upload failed"
+
+            # =========================
+            # 2. POST -> history
+            # =========================
+            - http_request.send:
+                method: POST
+                url: !secret firebase_history_url_hw
+                request_headers:
+                  Content-Type: application/json
+                json: |-
+                  root["temp"] = id(temp).state;
+                  root["humi"] = id(humi).state;
+                  root["light"] = id(light).state;
+                  root["pressure"] = id(pressure).state;
+                  root["soil"] = id(soil).state;
+                  root["battery"] = id(battery).state;
+                  root["timestamp"] = id(sntp_time).now().timestamp;
+                on_response:
+                  then:
+                    - logger.log:
+                        format: "History HTTP status = %d"
+                        args:
+                          - response->status_code
+                on_error:
+                  then:
+                    - logger.log: "History upload failed"
+          else:
+            - logger.log: "Skip Firebase: WiFi or time not ready"

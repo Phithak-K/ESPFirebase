@@ -1,0 +1,25 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# ESPHome Cache & Secrets
+config/.esphome/
+config/.device-builder*
+config/.receiver_peers.json
+config/.offloader_pairings.json
+**/secrets.yaml
+**/secrets.yml
+
+# Dashboard Config (ซ่อนคีย์เมื่อ Deploy ขึ้น GitHub)
+dashboard/config.js
+freeboard/config.js
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+ESP32-Firebase-GitHub/
+config.js

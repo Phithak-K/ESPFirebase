@@ -1,0 +1,85 @@
+name: CI — Build, Lint & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  security-audit:
+    name: 🔒 Security & Secret Leak Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🛡️ Verify no secrets or sensitive files are committed
+        run: |
+          echo "Checking for committed secrets..."
+          if git ls-files | grep -E "(secrets\.yaml$|freeboard/config\.js$)"; then
+            echo "::error::Found committed secret files that should be ignored!"
+            exit 1
+          fi
+          echo "No sensitive secret files found in repository!"
+
+  esphome-validation:
+    name: ⚙️ ESPHome Configuration Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🔑 Prepare test secrets.yaml from example
+        run: |
+          cp config/secrets.yaml.example config/secrets.yaml
+
+      - name: 🧪 Validate ESPHome YAMLs (L1 to L5)
+        run: |
+          echo "Validating firebase-l1.yaml..."
+          esphome config config/firebase-l1.yaml
+
+          echo "Validating firebase-l2.yaml..."
+          esphome config config/firebase-l2.yaml
+
+          echo "Validating firebase-l3.yaml..."
+          esphome config config/firebase-l3.yaml
+
+          echo "Validating firebase-l4.yaml..."
+          esphome config config/firebase-l4.yaml
+
+          echo "Validating firebase-l5.yaml..."
+          esphome config config/firebase-l5.yaml
+
+          echo "Validating firebase-hw.yaml..."
+          esphome config config/firebase-hw.yaml
+
+  web-dashboard-ci:
+    name: 🌐 Web Dashboard Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 🔍 Check JavaScript Syntax
+        run: |
+          node --check freeboard/script.js
+          node --check freeboard/config.example.js
+          echo "All JavaScript files passed syntax check!"
