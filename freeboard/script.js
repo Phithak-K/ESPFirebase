@@ -1,25 +1,11 @@
 // =========================================================================
-// ⚙️ Firebase Database URL Configuration (ซ่อนคีย์เมื่อ Deploy บน GitHub)
-// ลำดับการอ่านค่า:
-// 1. จาก URL Query Parameter (?db=https://...) สะดวกเวลาเปิดผ่าน GitHub Pages
-// 2. จากไฟล์ config.js (ถูกซ่อนด้วย .gitignore ไว้ ไม่หลุดขึ้น GitHub)
-// 3. จาก LocalStorage ในเบราว์เซอร์
+// ⚙️ Firebase Database URL Configuration
+// ฮาร์ดโค้ด URL เลยตามที่อาจารย์สั่ง จะได้ไม่ต้องกรอกหน้าเว็บ
 // =========================================================================
 
-const urlParams = new URLSearchParams(window.location.search);
-const queryDbUrl = urlParams.get('db');
-if (queryDbUrl) {
-    let cleanUrl = queryDbUrl.trim();
-    if (cleanUrl.endsWith('/')) cleanUrl = cleanUrl.slice(0, -1);
-    localStorage.setItem('esp32_db_url', cleanUrl);
-    window.history.replaceState({}, document.title, window.location.pathname);
-}
+// ใส่ URL ของ Firebase ตรงนี้ (ดึงมาจากภาพที่ส่งมา)
+let DB_URL = "https://iot-120-default-rtdb.asia-southeast1.firebasedatabase.app";
 
-const fileDbUrl = (typeof window.FIREBASE_CONFIG !== 'undefined' && window.FIREBASE_CONFIG.DATABASE_URL) 
-    ? window.FIREBASE_CONFIG.DATABASE_URL.trim() 
-    : "";
-
-let DB_URL = fileDbUrl || localStorage.getItem('esp32_db_url') || "";
 // Student ID placeholder in database path
 const DEVICE_PATH = "/iot-120"; 
 
